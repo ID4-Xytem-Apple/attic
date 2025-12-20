@@ -1,0 +1,21 @@
+---
+established_date: 2014-03-19
+retirement_date: 2025-12-17
+attic_issue: ATTIC-251
+attic_date:
+attic_banner: true
+project_description: >-
+    Olingo was a Java library that implements the Open Data Protocol (OData). 
+board_resolution: true
+board_reports: true
+downloads: true
+source_repositories:
+-   type: Git
+mailing_lists:
+- dev
+- commits
+- user
+issue_trackers:
+-   type: JIRA
+wiki:
+    type: CWIKI

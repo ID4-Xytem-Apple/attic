@@ -30,6 +30,34 @@
   Previously the project websites themselves were changed.
 ]]--
 
+-- hostnames that need special processing
+-- keys are the host names, values are the style of edit needed
+local OVERRIDES = {
+  predictionio = 'a',
+  mxnet = 'b',
+  twill = 'c',
+  eagle = 'd',
+  metamodel = 'e',
+  griffin = 'e',
+  abdera = 'f',
+  wink = 'f',
+  tiles = 'g',
+  lenya = 'h',
+  whirr = 'h',
+  mrunit = 'i',
+  excalibur = 'i',
+  -- Shorthand names for testing using VAR_NAME override
+  _a = 'a',
+  _b = 'b',
+  _c = 'c',
+  _d = 'd',
+  _e = 'e',
+  _f = 'f',
+  _g = 'g',
+  _h = 'h',
+  _i = 'i',
+}
+
 function output_filter(r)
     -- We only filter text/html types
     if not r.content_type:match("text/html") then return end
@@ -57,7 +85,8 @@ function output_filter(r)
 
     -- add header:
     -- special processing needed for some hosts
-    if host == 'predictionio' or host == 'eagle' or host == 'metamodel' or host == 'mxnet' or host == 'twill'
+    local style = OVERRIDES[host]
+    if style
     then
         coroutine.yield('')
     else
@@ -66,32 +95,45 @@ function output_filter(r)
 
     -- spit out the actual page
     while bucket ~= nil do
+        local output
         -- special processing needed for hosts as above
-        if host == 'predictionio'
+        if style == 'a'
         then
-            local output = bucket:gsub('<header>', '<header>'..div, 1)
-            coroutine.yield(output)
-        elseif host == 'mxnet'
+            output = bucket:gsub('<header>', '<header>'..div, 1)
+        elseif style == 'b'
         then
-            local output = bucket:gsub('</header>', div..'</header>', 1)
-            coroutine.yield(output)
-        elseif host == 'twill'
+            output = bucket:gsub('</header>', div..'</header>', 1)
+        elseif style == 'c'
         then
             -- Fix for Javadocs: </header> does not appear in them, and
             -- topNav only appears in the Javadoc pages that can take the div without failing
-            local output = bucket:gsub('</header>', div..'</header>', 1):gsub('<div class="topNav">', divnew..'<div class="topNav">', 1)
-            coroutine.yield(output)
-        elseif host == 'eagle'
+            output = bucket:gsub('</header>', div..'</header>', 1):gsub('<div class="topNav">', divnew..'<div class="topNav">', 1)
+        elseif style == 'd'
         then
-            local output = bucket:gsub('</nav>', '</nav>'..div, 1)
-            coroutine.yield(output)
-        elseif host == 'metamodel'
+            output = bucket:gsub('</nav>', '</nav>'..div, 1)
+        elseif style == 'e'
         then
-            local output = bucket:gsub('</nav>', div..'</nav>', 1):gsub('<div class="topNav">', divnew..'<div class="topNav">', 1)
-            coroutine.yield(output)
+            output = bucket:gsub('</nav>', div..'</nav>', 1):gsub('<div class="topNav">', divnew..'<div class="topNav">', 1)
+        elseif style == 'f' -- old-style Java and project websites
+        then
+            output = bucket:gsub('<body>', '<body>'..div, 1):gsub('<A NAME="navbar_top">', divnew..'<A NAME="navbar_top">', 1)
+        elseif style == 'g'
+        then
+            local body = '<body class="topBarEnabled">'
+            local javadoc = '<div class="topNav">'
+            output = bucket:gsub(body, body..div, 1):gsub(javadoc, divnew..javadoc, 1)
+        elseif style == 'h' -- old-style Javadoc fixup only
+        then
+            output = bucket:gsub('<A NAME="navbar_top">', divnew..'<A NAME="navbar_top">', 1)
+        elseif style == 'i' -- Javadoc fixup only
+        then
+            -- '-' is a pattern meta-character so has to be escaped
+            local javadoc = '(<!%-%- ========= START OF TOP NAVBAR ======= %-%->)'
+            output = bucket:gsub(javadoc, "%1" .. divnew, 1)
         else
-            coroutine.yield(bucket)
+            output = bucket
         end
+        coroutine.yield(output)
     end
 
     -- no need to add anything at the end of the content
